@@ -29,11 +29,16 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 /*
  * This OpMode illustrates the concept of driving a path based on encoder counts.
@@ -66,7 +71,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 public class DriveAuto_20261010 extends LinearOpMode {
 
     /* Declare OpMode members. */
-    private DcMotor         leftDrivefront   = null;
+    private DcMotor leftDrivefront   = null;
     private DcMotor         rightDrivefront  = null;
 
     private DcMotor         leftDriveback   = null;
@@ -77,25 +82,28 @@ public class DriveAuto_20261010 extends LinearOpMode {
 
     private ElapsedTime     runtime = new ElapsedTime();
 
+    GoBildaPinpointDriver pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
+
     // Calculate the COUNTS_PER_INCH for your specific drive train.
     // Go to your motor vendor website to determine your motor's COUNTS_PER_MOTOR_REV
     // For external drive gearing, set DRIVE_GEAR_REDUCTION as needed.
     // For example, use a value of 2.0 for a 12-tooth spur gear driving a 24-tooth spur gear.
     // This is gearing DOWN for less speed and more torque.
     // For gearing UP, use a gear ratio less than 1.0. Note this will affect the direction of wheel rotation.
-    static final double     COUNTS_PER_MOTOR_REV    = 1537.7 ;    // eg: TETRIX Motor Encoder
+    static final double     COUNTS_PER_MOTOR_REV    = 537.7 ;    // eg: TETRIX Motor Encoder
     static final double     DRIVE_GEAR_REDUCTION    = 1.0 ;     // No External Gearing.
     static final double     WHEEL_DIAMETER_INCHES   = 4.09449 ;     // For figuring circumference
     static final double     COUNTS_PER_INCH         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
             (WHEEL_DIAMETER_INCHES * 3.1415);
     static final double     DRIVE_SPEED             = 0.2;
     static final double     INTAKE_SPEED              = DRIVE_SPEED*2;
+    double Kp = 0.1;
 
     @Override
     public void runOpMode() {
 
         // Initialize the drive system variables.
-
+        pinpoint.resetPosAndIMU();
 
          leftDrivefront =
                 hardwareMap.dcMotor.get("frontLeftMotor");
@@ -124,8 +132,7 @@ public class DriveAuto_20261010 extends LinearOpMode {
         // When run, this OpMode should start both motors driving forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
         leftDriveback.setDirection(DcMotor.Direction.REVERSE);
-        leftDrivefront.setDirection(DcMotor.Direction.FORWARD);
-
+        leftDrivefront.setDirection(DcMotor.Direction.REVERSE);
 
         leftDrivefront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightDrivefront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -163,12 +170,11 @@ public class DriveAuto_20261010 extends LinearOpMode {
     public void encoderDrive(double speed,
                              double leftInches, double rightInches,
                              double timeoutS) {
-
-
         int newLeftBackTarget;
         int newleftFrontTarget;
         int newRightBackTarget;
         int newRightFrontTarget;
+        double targetheading = pinpoint.getHeading(AngleUnit.DEGREES);
 
         if (opModeIsActive()) {
 
@@ -193,7 +199,7 @@ public class DriveAuto_20261010 extends LinearOpMode {
             rightDrivefront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             // reset the timeout time and start motion.
             runtime.reset();
-            leftDriveback.setPower(Math.abs(speed) );
+            leftDriveback.setPower(Math.abs(speed));
             leftDrivefront.setPower(Math.abs(speed));
             rightDriveback.setPower(Math.abs(speed));
             rightDrivefront.setPower(Math.abs(speed));
@@ -207,7 +213,13 @@ public class DriveAuto_20261010 extends LinearOpMode {
             while (opModeIsActive() &&
                     (runtime.seconds() < timeoutS) &&
                     (leftDrivefront.isBusy() && rightDrivefront.isBusy())) {
+                double error  = targetheading - pinpoint.getHeading(AngleUnit.DEGREES);
+                double output = error*Kp;
+                leftDriveback.setPower(Math.abs(speed)-output);
+                leftDrivefront.setPower(Math.abs(speed)-output);
 
+                rightDriveback.setPower(Math.abs(speed)+output);
+                rightDrivefront.setPower(Math.abs(speed)+output);
 
             }
 
@@ -226,4 +238,77 @@ public class DriveAuto_20261010 extends LinearOpMode {
             sleep(250);   // optional pause after each move.
         }
     }
+
+
+public void PIDDrive(double targetPosition) {
+    double targetheading = pinpoint.getHeading(AngleUnit.DEGREES);
+    targetPosition *= COUNTS_PER_INCH;
+
+    double leftPosition = 0 ;
+    double rightPosition = 0;
+    double robotPosition = 0;
+    leftDrivefront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    rightDrivefront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    leftDriveback.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    rightDriveback.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+    leftDrivefront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    rightDrivefront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    leftDriveback.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    rightDriveback.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+
+
+
+
+
+    if (opModeIsActive()) {
+
+        // Determine new target position, and pass to motor controller
+
+        runtime.reset();
+
+
+        // keep looping while we are still active, and there is time left, and both motors are running.
+        // Note: We use (isBusy() && isBusy()) in the loop test, which means that when EITHER motor hits
+        // its target position, the motion will stop.  This is "safer" in the event that the robot will
+        // always end the motion as soon as possible.
+        // However, if you require that BOTH motors have finished their moves before the robot continues
+        // onto the next step, use (isBusy() || isBusy()) in the loop test.
+        while (opModeIsActive() &&
+                robotPosition>=targetPosition) {
+
+            leftPosition = leftDrivefront.getCurrentPosition();
+            rightPosition = rightDrivefront.getCurrentPosition();
+            robotPosition = (leftPosition+rightPosition)/2.0;
+
+            double error  = targetheading - pinpoint.getHeading(AngleUnit.DEGREES);
+            double output = error*Kp;
+
+
+            double leftError = targetPosition - leftPosition;
+            double rightError = targetPosition -rightPosition;
+            double leftSpeed = leftError * Kp;
+            double rightSpeed = rightError  *Kp;
+
+
+            leftDriveback.setPower(leftSpeed-output);
+            leftDrivefront.setPower(leftSpeed-output);
+
+            rightDriveback.setPower(rightSpeed+output);
+            rightDrivefront.setPower(rightSpeed+output);
+
+        }
+
+        // Stop all motion;
+        leftDriveback.setPower(0);
+        leftDrivefront.setPower(0);
+        rightDriveback.setPower(0);
+        rightDrivefront.setPower(0);
+
+
+
+        sleep(250);   // optional pause after each move.
+    }
+}
 }

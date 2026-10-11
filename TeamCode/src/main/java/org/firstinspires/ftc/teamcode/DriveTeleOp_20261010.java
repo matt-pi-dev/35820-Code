@@ -15,8 +15,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
 
 
-@TeleOp(name = "Field Centric + Pinpoint + Intake")
-public class FTCcode extends LinearOpMode {
+@TeleOp(name = "DriveTeleOp_20261010")
+public class DriveTeleOp_20261010 extends LinearOpMode {
 
 
     @Override
@@ -187,7 +187,7 @@ public class FTCcode extends LinearOpMode {
             // NO negative sign here because this fixes the
             // reversed forward/backward you were experiencing.
             double y =
-                    gamepad1.left_stick_y * sense;
+                    - gamepad1.left_stick_y * sense;
 
 
 
