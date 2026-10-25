@@ -1,21 +1,18 @@
 package org.firstinspires.ftc.teamcode;
 
-
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
 
-@Autonomous(name = "DriveAuto_20261024")
+@Autonomous(name="DriveAuto_20261024")
+
 public class DriveAuto_20261024 extends LinearOpMode {
 
     /* Declare OpMode members. */
@@ -29,8 +26,7 @@ public class DriveAuto_20261024 extends LinearOpMode {
     private DcMotor         intakeMotor = null;
 
     private ElapsedTime     runtime = new ElapsedTime();
-    
-    GoBildaPinpointDriver pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
+
 
     // Calculate the COUNTS_PER_INCH for your specific drive train.
     // Go to your motor vendor website to determine your motor's COUNTS_PER_MOTOR_REV
@@ -56,20 +52,29 @@ public class DriveAuto_20261024 extends LinearOpMode {
         // =====================================================
 
 
-        DcMotor frontLeftMotor =
+        frontLeftMotor =
                 hardwareMap.dcMotor.get("frontLeftMotor");
 
 
-        DcMotor backLeftMotor =
+        backLeftMotor =
                 hardwareMap.dcMotor.get("backLeftMotor");
 
 
-        DcMotor frontRightMotor =
+        frontRightMotor =
                 hardwareMap.dcMotor.get("frontRightMotor");
 
 
-        DcMotor backRightMotor =
+        backRightMotor =
                 hardwareMap.dcMotor.get("backRightMotor");
+
+
+        intakeMotor =
+                hardwareMap.dcMotor.get("intakeMotor");
+
+
+        intakeMotor.setZeroPowerBehavior(
+                DcMotor.ZeroPowerBehavior.BRAKE
+        );
 
         backLeftMotor.setDirection(DcMotor.Direction.REVERSE);
         frontLeftMotor.setDirection(DcMotor.Direction.REVERSE);
@@ -83,14 +88,6 @@ public class DriveAuto_20261024 extends LinearOpMode {
         frontRightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backLeftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backRightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        DcMotor intakeMotor =
-                hardwareMap.dcMotor.get("intakeMotor");
-
-
-        intakeMotor.setZeroPowerBehavior(
-                DcMotor.ZeroPowerBehavior.BRAKE
-        );
 
         // Wait for the game to start (driver presses START)
         waitForStart();
@@ -120,7 +117,6 @@ public class DriveAuto_20261024 extends LinearOpMode {
         int newLeftFrontTarget;
         int newRightBackTarget;
         int newRightFrontTarget;
-        double targetheading = pinpoint.getHeading(AngleUnit.DEGREES);
         double intakePower = 0.8;
 
         if (opModeIsActive()) {
@@ -158,6 +154,23 @@ public class DriveAuto_20261024 extends LinearOpMode {
             // always end the motion as soon as possible.
             // However, if you require that BOTH motors have finished their moves before the robot continues
             // onto the next step, use (isBusy() || isBusy()) in the loop test.
+            while (opModeIsActive() &&
+                    (runtime.seconds() < timeoutS) &&
+                    (frontLeftMotor.isBusy() && frontRightMotor.isBusy())) {
+            }
+
+            // Stop all motion;
+            backLeftMotor.setPower(0);
+            frontLeftMotor.setPower(0);
+            backRightMotor.setPower(0);
+            frontRightMotor.setPower(0);
+
+            // Turn off RUN_TO_POSITION
+            backLeftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            frontLeftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            backRightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            frontRightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
         }
     }
 }
