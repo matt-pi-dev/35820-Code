@@ -289,7 +289,7 @@ public void PIDDrive(double targetPosition) {
             double leftError = targetPosition - leftPosition;
             double rightError = targetPosition -rightPosition;
             double leftSpeed = leftError * Kp;
-            double rightSpeed = rightError  *Kp;
+            double rightSpeed = rightError  * Kp;
 
 
             leftDriveback.setPower(leftSpeed-output);
