@@ -15,8 +15,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
 
 
-
-
 @TeleOp(name = "DriveTeleOp_20261024")
 public class DriveTeleOp_20261024 extends LinearOpMode {
 
@@ -186,7 +184,7 @@ public class DriveTeleOp_20261024 extends LinearOpMode {
             // -------------------------------------------------
 
 
-            double sense = 0.75;
+            double sense = 0.6;
 
 
 
@@ -210,7 +208,7 @@ public class DriveTeleOp_20261024 extends LinearOpMode {
 
             // Rotate
             double rx =
-                    gamepad1.right_stick_x * (sense);
+                    -gamepad1.right_stick_x * sense;
 
 
 
